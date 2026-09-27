@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>AP Staging — Meridian Freight</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light dark" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <strong>Meridian Freight</strong>
+    <span class="sys">AP Staging Console</span>
+  </div>
+  <div class="right">
+    <span class="badge-demo">Demo environment</span>
+    <div class="session-info">
+      <span>Signed in as <strong id="sessionUser">—</strong></span>
+      <a href="#" id="signOutLink">Sign out</a>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="hero-row">
+    <div>
+      <h1>AP staging</h1>
+      <p class="subhead">Supplier invoices staged for posting to the general ledger.</p>
+    </div>
+    <a href="new-invoice.html" class="primary">+ Create AP staging</a>
+  </div>
+
+  <div class="card">
+    <h2>Posted invoices</h2>
+    <div id="listWrap"></div>
+  </div>
+</main>
+
+<script src="session.js"></script>
+<script>
+  requireSession();
+
+  function money(n) {
+    return "$" + Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function render() {
+    const invoices = getPostedInvoices();
+    const wrap = document.getElementById("listWrap");
+
+    if (invoices.length === 0) {
+      wrap.innerHTML =
+        '<div class="empty-state">' +
+        "<p>No invoices posted yet.</p>" +
+        '<a href="new-invoice.html" class="primary">+ Create AP staging</a>' +
+        "</div>";
+      return;
+    }
+
+    const rows = invoices
+      .map((inv) => {
+        const posted = new Date(inv.postedAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
+        return (
+          "<tr>" +
+          '<td class="mono staging-id">' + inv.stagingId + "</td>" +
+          "<td>" + inv.supplierName + "</td>" +
+          '<td class="mono">' + inv.invoiceNumber + "</td>" +
+          "<td>" + inv.costCenter + "</td>" +
+          '<td class="num">' + money(inv.invoiceTotal) + "</td>" +
+          "<td>" + posted + "</td>" +
+          "</tr>"
+        );
+      })
+      .join("");
+
+    document.getElementById("listWrap").innerHTML =
+      '<div class="items-table-wrap"><table class="posted">' +
+      "<thead><tr>" +
+      "<th>Staging ID</th><th>Supplier</th><th>Invoice #</th><th>Cost center</th>" +
+      '<th class="num">Total</th><th>Posted</th>' +
+      "</tr></thead><tbody>" +
+      rows +
+      "</tbody></table></div>";
+  }
+
+  render();
+</script>
+
+</body>
+</html>

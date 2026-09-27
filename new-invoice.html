@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>New supplier invoice — Meridian Freight AP Staging</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light dark" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <strong>Meridian Freight</strong>
+    <span class="sys">AP Staging Console</span>
+  </div>
+  <div class="right">
+    <span class="badge-demo">Demo environment</span>
+    <div class="session-info">
+      <span>Signed in as <strong id="sessionUser">—</strong></span>
+      <a href="#" id="signOutLink">Sign out</a>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div id="formView">
+    <h1>New supplier invoice</h1>
+    <p class="subhead">Stage an extracted invoice for posting to the general ledger.</p>
+
+    <form id="invoiceForm" novalidate>
+      <div class="card">
+        <h2>Invoice header</h2>
+        <div class="field-row">
+          <div class="field">
+            <label for="supplierName">Supplier name</label>
+            <input id="supplierName" name="supplierName" type="text" placeholder="e.g. Continental Tire Americas" required />
+          </div>
+          <div class="field">
+            <label for="invoiceNumber">Invoice number</label>
+            <input id="invoiceNumber" name="invoiceNumber" type="text" data-kind="id" placeholder="e.g. CT-88213" required />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="invoiceDate">Invoice date</label>
+            <input id="invoiceDate" name="invoiceDate" type="date" required />
+          </div>
+          <div class="field">
+            <label for="dueDate">Due date <span class="opt">(optional)</span></label>
+            <input id="dueDate" name="dueDate" type="date" />
+          </div>
+          <div class="field">
+            <label for="poNumber">PO number <span class="opt">(optional)</span></label>
+            <input id="poNumber" name="poNumber" type="text" data-kind="id" placeholder="e.g. PO-40021" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="currency">Currency</label>
+            <input id="currency" name="currency" type="text" value="USD" maxlength="3" required />
+          </div>
+          <div class="field">
+            <label for="invoiceTotal">Invoice total</label>
+            <input id="invoiceTotal" name="invoiceTotal" type="number" step="0.01" min="0" data-kind="money" placeholder="0.00" required />
+          </div>
+          <div class="field">
+            <label for="taxAmount">Tax amount <span class="opt">(optional)</span></label>
+            <input id="taxAmount" name="taxAmount" type="number" step="0.01" min="0" data-kind="money" placeholder="0.00" />
+          </div>
+          <div class="field">
+            <label for="costCenter">Cost center</label>
+            <input id="costCenter" name="costCenter" type="text" placeholder="e.g. Omaha Terminal — Maintenance" required />
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Line items</h2>
+        <div class="items-table-wrap">
+          <table class="items">
+            <colgroup>
+              <col class="c-desc" /><col class="c-cat" /><col class="c-qty" />
+              <col class="c-price" /><col class="c-amt" /><col class="c-rm" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Spend category</th>
+                <th class="num">Qty</th>
+                <th class="num">Unit price</th>
+                <th class="num">Amount</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="itemsBody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="add-row-btn" id="addRowBtn">+ Add line item</button>
+
+        <div class="totals-row">
+          <span class="label">Line items total</span>
+          <span class="value" id="itemsTotal">$0.00</span>
+        </div>
+        <div class="reconcile-banner" id="reconcileBanner">
+          ⚠ Line items total doesn't match invoice total — check before posting.
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div id="confirmView">
+    <div class="confirm-card">
+      <div class="confirm-icon">✓</div>
+      <h2>Invoice posted to AP staging</h2>
+      <div class="staging-id" id="stagingId">SIR-000000</div>
+      <p class="subhead" id="postedMeta" style="margin:0;">—</p>
+      <div class="recap" id="recap"></div>
+      <div class="confirm-actions">
+        <a href="home.html" class="primary">Back to AP staging</a>
+        <a href="#" class="secondary" id="newInvoiceLink">Stage another invoice</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="actionbar" id="actionbar">
+  <div class="actionbar-inner">
+    <span class="hint" id="actionHint">All required fields must be complete before posting.</span>
+    <button type="submit" form="invoiceForm" class="primary" id="submitBtn">Post to AP staging</button>
+  </div>
+</div>
+
+<template id="rowTemplate">
+  <tr class="item-row">
+    <td><input type="text" class="i-desc" placeholder="e.g. Brake pad set, axle 2" /></td>
+    <td>
+      <select class="i-cat">
+        <option value="">Select…</option>
+        <option>Vehicle Maintenance Parts</option>
+        <option>Tires</option>
+        <option>Fuel</option>
+        <option>Shop Supplies</option>
+        <option>Freight / Trailer Repair</option>
+        <option>Office Supplies</option>
+        <option>Software / Subscriptions</option>
+        <option>Other</option>
+      </select>
+    </td>
+    <td class="num"><input type="number" class="i-qty" min="0" step="1" /></td>
+    <td class="num"><input type="number" class="i-price" min="0" step="0.01" data-kind="money" /></td>
+    <td class="num"><input type="number" class="i-amt" min="0" step="0.01" data-kind="money" /></td>
+    <td class="rm"><button type="button" class="rm-btn" title="Remove line" aria-label="Remove line">✕</button></td>
+  </tr>
+</template>
+
+<script src="session.js"></script>
+<script>
+  requireSession();
+
+  const itemsBody = document.getElementById("itemsBody");
+  const rowTemplate = document.getElementById("rowTemplate");
+  const itemsTotalEl = document.getElementById("itemsTotal");
+  const invoiceTotalInput = document.getElementById("invoiceTotal");
+  const reconcileBanner = document.getElementById("reconcileBanner");
+
+  function money(n) {
+    return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function addRow() {
+    const node = rowTemplate.content.cloneNode(true);
+    const row = node.querySelector(".item-row");
+    row.querySelector(".rm-btn").addEventListener("click", () => {
+      row.remove();
+      recalcTotals();
+    });
+    row.querySelectorAll("input").forEach((el) => el.addEventListener("input", recalcTotals));
+    itemsBody.appendChild(row);
+  }
+
+  function recalcTotals() {
+    let sum = 0;
+    itemsBody.querySelectorAll(".item-row").forEach((row) => {
+      const amt = parseFloat(row.querySelector(".i-amt").value);
+      if (!Number.isNaN(amt)) sum += amt;
+    });
+    itemsTotalEl.textContent = money(sum);
+
+    const invoiceTotal = parseFloat(invoiceTotalInput.value);
+    if (!Number.isNaN(invoiceTotal) && itemsBody.querySelectorAll(".item-row").length > 0) {
+      const diff = Math.abs(invoiceTotal - sum);
+      reconcileBanner.classList.toggle("show", diff > 0.01);
+    } else {
+      reconcileBanner.classList.remove("show");
+    }
+  }
+
+  document.getElementById("addRowBtn").addEventListener("click", addRow);
+  invoiceTotalInput.addEventListener("input", recalcTotals);
+  addRow();
+
+  function fieldLabel(input) {
+    const label = document.querySelector('label[for="' + input.id + '"]');
+    return label ? label.textContent.replace(/\s*\(optional\)\s*/, "").trim() : input.name;
+  }
+
+  function validate() {
+    let firstInvalid = null;
+    document.querySelectorAll("#invoiceForm [required]").forEach((el) => {
+      const empty = !el.value || !el.value.trim();
+      el.classList.toggle("invalid", empty);
+      if (empty && !firstInvalid) firstInvalid = el;
+    });
+    return firstInvalid;
+  }
+
+  function generateStagingId(invoiceNumber) {
+    const year = new Date().getFullYear();
+    let hash = 0;
+    for (let i = 0; i < invoiceNumber.length; i++) {
+      hash = (hash * 31 + invoiceNumber.charCodeAt(i)) >>> 0;
+    }
+    const suffix = String(hash % 10000).padStart(4, "0");
+    return "SIR-" + year + "-" + suffix;
+  }
+
+  document.getElementById("invoiceForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const firstInvalid = validate();
+    if (firstInvalid) {
+      firstInvalid.scrollIntoView({ block: "center", behavior: "smooth" });
+      firstInvalid.focus();
+      document.getElementById("actionHint").textContent =
+        "Missing required field: " + fieldLabel(firstInvalid);
+      document.getElementById("actionHint").style.color = "var(--danger)";
+      return;
+    }
+
+    const supplierName = document.getElementById("supplierName").value.trim();
+    const invoiceNumber = document.getElementById("invoiceNumber").value.trim();
+    const invoiceDate = document.getElementById("invoiceDate").value;
+    const dueDate = document.getElementById("dueDate").value;
+    const currency = document.getElementById("currency").value.trim().toUpperCase();
+    const invoiceTotal = parseFloat(invoiceTotalInput.value);
+    const taxAmount = document.getElementById("taxAmount").value;
+    const costCenter = document.getElementById("costCenter").value.trim();
+    const poNumber = document.getElementById("poNumber").value.trim();
+
+    const lineItems = [];
+    itemsBody.querySelectorAll(".item-row").forEach((row) => {
+      const desc = row.querySelector(".i-desc").value.trim();
+      const amt = parseFloat(row.querySelector(".i-amt").value);
+      if (desc || !Number.isNaN(amt)) {
+        lineItems.push({
+          description: desc,
+          spendCategory: row.querySelector(".i-cat").value,
+          amount: Number.isNaN(amt) ? 0 : amt,
+        });
+      }
+    });
+
+    const stagingId = generateStagingId(invoiceNumber);
+    const postedAt = new Date().toISOString();
+
+    document.getElementById("stagingId").textContent = stagingId;
+    document.getElementById("postedMeta").textContent =
+      "Posted " + new Date(postedAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
+
+    const recap = document.getElementById("recap");
+    recap.innerHTML = "";
+    const dl = document.createElement("dl");
+    const rows = [
+      ["Supplier", supplierName],
+      ["Invoice #", invoiceNumber],
+      ["PO #", poNumber || "—"],
+      ["Cost center", costCenter],
+      ["Currency", currency],
+      ["Tax", taxAmount ? money(parseFloat(taxAmount)) : "—"],
+      ["Invoice total", money(invoiceTotal)],
+      ["Line items", String(lineItems.length)],
+    ];
+    rows.forEach(([k, v]) => {
+      const dt = document.createElement("dt");
+      dt.textContent = k;
+      const dd = document.createElement("dd");
+      dd.textContent = v;
+      dl.appendChild(dt);
+      dl.appendChild(dd);
+    });
+    recap.appendChild(dl);
+
+    addPostedInvoice({
+      stagingId,
+      supplierName,
+      invoiceNumber,
+      poNumber,
+      costCenter,
+      currency,
+      invoiceTotal,
+      taxAmount: taxAmount ? parseFloat(taxAmount) : 0,
+      lineItems,
+      postedAt,
+    });
+
+    document.getElementById("formView").classList.add("hide");
+    document.getElementById("confirmView").classList.add("show");
+    document.getElementById("actionbar").style.display = "none";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  document.getElementById("newInvoiceLink").addEventListener("click", (e) => {
+    e.preventDefault();
+    document.getElementById("invoiceForm").reset();
+    itemsBody.innerHTML = "";
+    addRow();
+    recalcTotals();
+    document.querySelectorAll("#invoiceForm .invalid").forEach((el) => el.classList.remove("invalid"));
+    document.getElementById("actionHint").textContent = "All required fields must be complete before posting.";
+    document.getElementById("actionHint").style.color = "var(--text-muted)";
+    document.getElementById("formView").classList.remove("hide");
+    document.getElementById("confirmView").classList.remove("show");
+    document.getElementById("actionbar").style.display = "flex";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+</script>
+
+</body>
+</html>
