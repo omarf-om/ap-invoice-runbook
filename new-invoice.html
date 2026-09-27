@@ -103,7 +103,7 @@
           <span class="value" id="itemsTotal">$0.00</span>
         </div>
         <div class="reconcile-banner" id="reconcileBanner">
-          ⚠ Line items total doesn't match invoice total — check before posting.
+          ⚠ Line items + tax don't match invoice total — check before posting.
         </div>
       </div>
     </form>
@@ -187,9 +187,11 @@
     });
     itemsTotalEl.textContent = money(sum);
 
+    const tax = parseFloat(document.getElementById("taxAmount").value);
+    const expected = sum + (Number.isNaN(tax) ? 0 : tax);
     const invoiceTotal = parseFloat(invoiceTotalInput.value);
     if (!Number.isNaN(invoiceTotal) && itemsBody.querySelectorAll(".item-row").length > 0) {
-      const diff = Math.abs(invoiceTotal - sum);
+      const diff = Math.abs(invoiceTotal - expected);
       reconcileBanner.classList.toggle("show", diff > 0.01);
     } else {
       reconcileBanner.classList.remove("show");
@@ -198,6 +200,7 @@
 
   document.getElementById("addRowBtn").addEventListener("click", addRow);
   invoiceTotalInput.addEventListener("input", recalcTotals);
+  document.getElementById("taxAmount").addEventListener("input", recalcTotals);
   addRow();
 
   function fieldLabel(input) {
